@@ -18,9 +18,7 @@
                 <input class="modalTitle" type="text" placeholder="Title..." id="titleModalInput">
                 <input class="modalDescription" type="text" placeholder="Description..." id="descriptionModalInput">
                 <div class="dropdown">
-                    <button onclick="modal.onColumnDropdownListClick()" class="dropbtn">Dropdown</button>
-                    <div id="columnDropdownList" class="dropdown-content">
-                    </div>
+                    <select id="columnSelect"></select>
                 </div>
             </div>
             <div class="modal-footer">
@@ -59,7 +57,7 @@
     var modal = document.getElementById('newItemModal');
     var titleModalInput = document.getElementById('titleModalInput');
     var descriptionModalInput = document.getElementById('descriptionModalInput');
-    var columnDropdownList = document.getElementById('columnDropdownList');
+    var columnSelect = document.getElementById('columnSelect');
     var closeButton = document.getElementsByClassName("close")[0];
 
     // Main Page Elements
@@ -72,55 +70,99 @@
     $.getJSON("db.json", function(json) {
         maltem.columns = json.columns;
         maltem.cards = json.cards;
+        maltem.updateRawColumns();
+        maltem.updateRawCards();
     });
 
     // Common Functions
-    maltem.updateRaws = function(){
-        rawColumns.textContent = maltem.columns;
-        rawCards.textContent = maltem.cards;
-    }
-    maltem.refreshColumnDropdownList = function(){
+    maltem.updateRawColumns = function(){
+        while (rawColumns.firstChild) {
+            rawColumns.removeChild(rawColumns.firstChild);
+        }
         $.each(maltem.columns, function(){
             $("<a></a>")
-            .attr("value", this.columnId)
+            .attr("value", this.id)
             .html(this.title)
-            .appendTo("#columnDropdownList");
+            .appendTo("#rawColumns");
+        });
+    }
+    maltem.updateRawCards = function(){
+        while (rawCards.firstChild) {
+            rawCards.removeChild(rawCards.firstChild);
+        }
+        $.each(maltem.cards, function(){
+            $("<a></a>")
+            .attr("value", this.id)
+            .html(this.title)
+            .appendTo("#rawCards");
+        });
+    }
+    maltem.refreshColumnSelect = function(){
+        while (columnSelect.firstChild) {
+            columnSelect.removeChild(columnSelect.firstChild);
+        }
+        $.each(maltem.columns, function(){
+            $("<option></option>")
+            .attr("value", this.id)
+            .html(this.title)
+            .appendTo("#columnSelect");
         });
     }
 
     // Common Modal Functions
     modal.addItem = function() {
         var newItem = {
+            id: new Date().getUTCMilliseconds(), //timestamp Id
             title: titleModalInput.value
         }
 
-        if(modal.mode === "COLUMN"){
+        if(modal.mode === "COLUMN" && modal.checkIfUnique(newItem,"COLUMN") == true){
             maltem.columns.push(newItem);
             console.log(maltem.columns);
 
-        } else if(modal.mode === "CARD") {
+        } else if(modal.mode === "CARD" && modal.checkIfUnique(newItem,"CARD") == true) {
             newItem.description = descriptionModalInput.value;
-            newItem.columnId = columnDropdownList.value.id;
+            newItem.columnId = columnSelect.value;
 
             maltem.cards.push(newItem);
 
             console.log(maltem.cards);
+        } else {
+            window.alert("Title is not unique !");
+            return;
         }
 
         // Reset Modal
         titleModalInput.value = null;
         descriptionModalInput.value = null;
-        columnDropdownList.value = null;
+        columnSelect.value = null;
 
 
         modal.closeModal();
     }
-    modal.closeModal = function(){
-        maltem.updateRaws();
-        modal.style.display = "none";
+    modal.checkIfUnique = function(newItem, objectType){        
+        var unique = true;
+        var array = [];
+
+        if(objectType.localeCompare("COLUMN") == 0) {
+            array = maltem.columns;
+        } else if(objectType.localeCompare("CARD" == 0)){
+            array = maltem.cards;
+        }
+        
+        array.some(function(element){
+            if(element.title.localeCompare(newItem.title) == 0) {
+                unique = false;
+            }
+        });
+
+        return unique;
     }
-    modal.onColumnDropdownListClick = function() {
-        columnDropdownList.classList.toggle("show");
+
+    modal.closeModal = function(){
+        maltem.updateRawColumns();
+        maltem.updateRawCards();
+        modal.style.display = "none";
     }
     closeButton.onclick = function(event){
         modal.closeModal();
@@ -131,12 +173,14 @@
     topnav.addColumn = function() {
         modal.mode = "COLUMN";
         descriptionModalInput.style.display = "none";
+        columnSelect.style.display = "none";
         modal.style.display = "block";
     };
     topnav.addCard = function() {
-        maltem.refreshColumnDropdownList();
+        maltem.refreshColumnSelect();
         modal.mode = "CARD";
         descriptionModalInput.style.display = "inline-block";
+        columnSelect.style.display = "inline-block";
         modal.style.display = "block";
     };
     topnav.filterCards = function() {
@@ -165,21 +209,5 @@
             var removed = maltem.pop('cards');
         }
     };
-
-
-
-    // Close the dropdown menu if the user clicks outside of it
-    window.onclick = function(event) {
-        if (!event.target.matches('.dropbtn')) {
-            var dropdowns = document.getElementsByClassName("dropdown-content");
-            var i;
-            for (i = 0; i < dropdowns.length; i++) {
-                var openDropdown = dropdowns[i];
-                if (openDropdown.classList.contains('show')) {
-                    openDropdown.classList.remove('show');
-                }
-            }
-        }
-    }
 
 </script>
