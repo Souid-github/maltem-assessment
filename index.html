@@ -1,0 +1,33 @@
+<body>
+    <!-- Add icon library -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <link rel="stylesheet" type="text/css" href="styles.css">
+
+    <script src="bower_components/webcomponentsjs/webcomponents.min.js"></script>
+    
+    <link rel="import" href="bower_components/hello-world-element/hello-world.html">
+
+    <script src="https://component.kitchen/polyfills/webcomponents-lite.js"></script>
+    <script type="module" src="https://component.kitchen/modules/AutosizeTextarea.js"></script>
+
+    <hello-world who="Maltem"></hello-world>
+
+    <elix-autosize-textarea minimum-rows="2" placeholder="Ecris ce que tu veux ici !">
+    </elix-autosize-textarea>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+    <!-- <script src="js/scripts.js"></script> -->
+</body>
+
+<script>
+    var maltem = {};
+
+    // Read Data from json
+    $.getJSON("db.json", function(json) {
+        console.log(json); // this will show the info it in firebug console
+        maltem.columns = json.columns;
+        maltem.cards = json.cards;
+    });    
+
+</script>
