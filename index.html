@@ -18,14 +18,14 @@
                 <input class="modalTitle" type="text" placeholder="Title..." id="titleModalInput">
                 <input class="modalDescription" type="text" placeholder="Description..." id="descriptionModalInput">
                 <div class="dropdown">
-                    <button onclick="maltem.onColumnDropdownListClick()" class="dropbtn">Dropdown</button>
+                    <button onclick="modal.onColumnDropdownListClick()" class="dropbtn">Dropdown</button>
                     <div id="columnDropdownList" class="dropdown-content">
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn danger" onclick="maltem.closeModal()">Cancel</button>
-                <button class="btn success" onclick="maltem.addItem()">Confirm</button>
+                <button class="btn danger" onclick="modal.closeModal()">Cancel</button>
+                <button class="btn success" onclick="modal.addItem()">Confirm</button>
             </div>
         </div>    
     </div>
@@ -34,47 +34,62 @@
     <div class="topnav">
         <a class="active">Trello-like</a>
         <b class="btn-group">            
-            <button onclick="maltem.addColumn()" class="btn success"><span class="fa fa-plus"></span> Add Column</button>
-            <button onclick="maltem.addCard()" class="btn success"><span class="fa fa-plus"></span> Add Card</button>
+            <button onclick="topnav.addColumn()" class="btn success"><span class="fa fa-plus"></span> Add Column</button>
+            <button onclick="topnav.addCard()" class="btn success"><span class="fa fa-plus"></span> Add Card</button>
         </b>
         <c>
-            <button onclick="maltem.filterCards()" class="btn success"><span class="fa fa-search"></span></button>
+            <button onclick="topnav.filterCards()" class="btn success"><span class="fa fa-search"></span></button>
             <input type="text" placeholder="Search..." id="searchInput">
         </c>
     </div>
+
+    <div id="rawColumns"></div>
+
+    <div id="rawCards"></div>
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
     <!-- <script src="js/scripts.js"></script> -->
 </body>
 
 <script>
-    // Get the modal
+    //TopNav Elements    
+    var searchInput = document.getElementById("searchInput");
+
+    // Modal Elements
     var modal = document.getElementById('newItemModal');
-    
-    // Get titleModalInput
     var titleModalInput = document.getElementById('titleModalInput');
-
-    // Get descriptionModalInput
     var descriptionModalInput = document.getElementById('descriptionModalInput');
-
-    // Get columnDropdownList
     var columnDropdownList = document.getElementById('columnDropdownList');
-
-    // Get the <span> element that closes the modal
     var closeButton = document.getElementsByClassName("close")[0];
+
+    // Main Page Elements
+    var rawColumns = document.getElementById('rawColumns');
+    var rawCards = document.getElementById('rawCards');
 
     var maltem = {};
 
-    // Read Data from json
+    // Read Data from JSON
     $.getJSON("db.json", function(json) {
         maltem.columns = json.columns;
         maltem.cards = json.cards;
-        console.log(maltem);
     });
 
-    //Common Modal Functions
-    maltem.addItem = function() {
+    // Common Functions
+    maltem.updateRaws = function(){
+        rawColumns.textContent = maltem.columns;
+        rawCards.textContent = maltem.cards;
+    }
+    maltem.refreshColumnDropdownList = function(){
+        $.each(maltem.columns, function(){
+            $("<a></a>")
+            .attr("value", this.columnId)
+            .html(this.title)
+            .appendTo("#columnDropdownList");
+        });
+    }
 
+    // Common Modal Functions
+    modal.addItem = function() {
         var newItem = {
             title: titleModalInput.value
         }
@@ -98,66 +113,58 @@
         columnDropdownList.value = null;
 
 
-        maltem.closeModal();
+        modal.closeModal();
     }
-
-    maltem.closeModal = function(){
+    modal.closeModal = function(){
+        maltem.updateRaws();
         modal.style.display = "none";
     }
-    maltem.onColumnDropdownListClick = function() {
+    modal.onColumnDropdownListClick = function() {
         columnDropdownList.classList.toggle("show");
     }
-
     closeButton.onclick = function(event){
-        maltem.closeModal();
+        modal.closeModal();
     }
 
-    // Column Functions
-    maltem.addColumn = function() {
+    // TopNav Functions
+    var topnav = {};
+    topnav.addColumn = function() {
         modal.mode = "COLUMN";
         descriptionModalInput.style.display = "none";
-
         modal.style.display = "block";
     };
-
-    maltem.editColumn = function(columnId, editedColumn){
-        var replacements = [editedColumn];
-        maltem.columns.map(obj => replacements.find(o => o.id === obj.id) || obj);
-    }
-
-    maltem.deleteColumn = function(columnId) {
-        if (maltem.items.length > 1) {
-            var removed = maltem.pop('columns');
-        }
-    };
-    
-    // Card Functions
-    maltem.addCard = function() {
+    topnav.addCard = function() {
         maltem.refreshColumnDropdownList();
         modal.mode = "CARD";
         descriptionModalInput.style.display = "inline-block";
         modal.style.display = "block";
     };
+    topnav.filterCards = function() {
+    }
 
-    maltem.editCard = function(cardId, editedCard){
+    // Column Functions
+    var columnElement = {};
+    columnElement.editColumn = function(columnId, editedColumn){
+        var replacements = [editedColumn];
+        maltem.columns.map(obj => replacements.find(o => o.id === obj.id) || obj);
+    }
+    columnElement.deleteColumn = function(columnId) {
+        if (maltem.columns.length > 1) {
+            var removed = maltem.pop('columns');
+        }
+    };
+    
+    // Card Functions
+    var cardElement = {};
+    cardElement.editCard = function(cardId, editedCard){
         var replacements = [editedCard];
         maltem.cards.map(obj => replacements.find(o => o.id === obj.id) || obj);
     }
-
-    maltem.deleteCard = function(cardId) {
-        if (maltem.items.length > 1) {
+    cardElement.deleteCard = function(cardId) {
+        if (maltem.cards.length > 1) {
             var removed = maltem.pop('cards');
         }
     };
-
-    maltem.refreshColumnDropdownList = function(){
-        $.each(maltem.columns, function(){
-            $("<a></a>")
-            .attr("value", this.columnId)
-            .html(this.title)
-            .appendTo("#columnDropdownList");
-        });
-    }
 
 
 
