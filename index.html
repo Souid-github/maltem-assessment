@@ -5,29 +5,174 @@
     <link rel="stylesheet" type="text/css" href="styles.css">
 
     <script src="bower_components/webcomponentsjs/webcomponents.min.js"></script>
-    
-    <link rel="import" href="bower_components/hello-world-element/hello-world.html">
-
     <script src="https://component.kitchen/polyfills/webcomponents-lite.js"></script>
-    <script type="module" src="https://component.kitchen/modules/AutosizeTextarea.js"></script>
 
-    <hello-world who="Maltem"></hello-world>
+    <!--    Modal    -->
+    <div id="newItemModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="close">&times;</span>
+                <h2>Add Item</h2>
+            </div>
+            <div class="modal-body">
+                <input class="modalTitle" type="text" placeholder="Title..." id="titleModalInput">
+                <input class="modalDescription" type="text" placeholder="Description..." id="descriptionModalInput">
+                <div class="dropdown">
+                    <button onclick="maltem.onColumnDropdownListClick()" class="dropbtn">Dropdown</button>
+                    <div id="columnDropdownList" class="dropdown-content">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn danger" onclick="maltem.closeModal()">Cancel</button>
+                <button class="btn success" onclick="maltem.addItem()">Confirm</button>
+            </div>
+        </div>    
+    </div>
 
-    <elix-autosize-textarea minimum-rows="2" placeholder="Ecris ce que tu veux ici !">
-    </elix-autosize-textarea>
+    <!--    Topnav    -->
+    <div class="topnav">
+        <a class="active">Trello-like</a>
+        <b class="btn-group">            
+            <button onclick="maltem.addColumn()" class="btn success"><span class="fa fa-plus"></span> Add Column</button>
+            <button onclick="maltem.addCard()" class="btn success"><span class="fa fa-plus"></span> Add Card</button>
+        </b>
+        <c>
+            <button onclick="maltem.filterCards()" class="btn success"><span class="fa fa-search"></span></button>
+            <input type="text" placeholder="Search..." id="searchInput">
+        </c>
+    </div>
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
     <!-- <script src="js/scripts.js"></script> -->
 </body>
 
 <script>
+    // Get the modal
+    var modal = document.getElementById('newItemModal');
+    
+    // Get titleModalInput
+    var titleModalInput = document.getElementById('titleModalInput');
+
+    // Get descriptionModalInput
+    var descriptionModalInput = document.getElementById('descriptionModalInput');
+
+    // Get columnDropdownList
+    var columnDropdownList = document.getElementById('columnDropdownList');
+
+    // Get the <span> element that closes the modal
+    var closeButton = document.getElementsByClassName("close")[0];
+
     var maltem = {};
 
     // Read Data from json
     $.getJSON("db.json", function(json) {
-        console.log(json); // this will show the info it in firebug console
         maltem.columns = json.columns;
         maltem.cards = json.cards;
-    });    
+        console.log(maltem);
+    });
+
+    //Common Modal Functions
+    maltem.addItem = function() {
+
+        var newItem = {
+            title: titleModalInput.value
+        }
+
+        if(modal.mode === "COLUMN"){
+            maltem.columns.push(newItem);
+            console.log(maltem.columns);
+
+        } else if(modal.mode === "CARD") {
+            newItem.description = descriptionModalInput.value;
+            newItem.columnId = columnDropdownList.value.id;
+
+            maltem.cards.push(newItem);
+
+            console.log(maltem.cards);
+        }
+
+        // Reset Modal
+        titleModalInput.value = null;
+        descriptionModalInput.value = null;
+        columnDropdownList.value = null;
+
+
+        maltem.closeModal();
+    }
+
+    maltem.closeModal = function(){
+        modal.style.display = "none";
+    }
+    maltem.onColumnDropdownListClick = function() {
+        columnDropdownList.classList.toggle("show");
+    }
+
+    closeButton.onclick = function(event){
+        maltem.closeModal();
+    }
+
+    // Column Functions
+    maltem.addColumn = function() {
+        modal.mode = "COLUMN";
+        descriptionModalInput.style.display = "none";
+
+        modal.style.display = "block";
+    };
+
+    maltem.editColumn = function(columnId, editedColumn){
+        var replacements = [editedColumn];
+        maltem.columns.map(obj => replacements.find(o => o.id === obj.id) || obj);
+    }
+
+    maltem.deleteColumn = function(columnId) {
+        if (maltem.items.length > 1) {
+            var removed = maltem.pop('columns');
+        }
+    };
+    
+    // Card Functions
+    maltem.addCard = function() {
+        maltem.refreshColumnDropdownList();
+        modal.mode = "CARD";
+        descriptionModalInput.style.display = "inline-block";
+        modal.style.display = "block";
+    };
+
+    maltem.editCard = function(cardId, editedCard){
+        var replacements = [editedCard];
+        maltem.cards.map(obj => replacements.find(o => o.id === obj.id) || obj);
+    }
+
+    maltem.deleteCard = function(cardId) {
+        if (maltem.items.length > 1) {
+            var removed = maltem.pop('cards');
+        }
+    };
+
+    maltem.refreshColumnDropdownList = function(){
+        $.each(maltem.columns, function(){
+            $("<a></a>")
+            .attr("value", this.columnId)
+            .html(this.title)
+            .appendTo("#columnDropdownList");
+        });
+    }
+
+
+
+    // Close the dropdown menu if the user clicks outside of it
+    window.onclick = function(event) {
+        if (!event.target.matches('.dropbtn')) {
+            var dropdowns = document.getElementsByClassName("dropdown-content");
+            var i;
+            for (i = 0; i < dropdowns.length; i++) {
+                var openDropdown = dropdowns[i];
+                if (openDropdown.classList.contains('show')) {
+                    openDropdown.classList.remove('show');
+                }
+            }
+        }
+    }
 
 </script>
