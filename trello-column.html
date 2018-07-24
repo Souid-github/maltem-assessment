@@ -19,9 +19,6 @@
         // Gets content from <template>
         var template = thisDoc.querySelector('template').content;
     
-        // Creates the "title" attribute and sets a default value
-        // MyElementProto.title = 'ColumnTitle';
-    
         class TrelloColumn extends HTMLElement{
     
             constructor() {
@@ -43,20 +40,20 @@
                 // Checks if the "title" attribute has been overwritten
                 if (this.hasAttribute('title')) {
                     var title = this.getAttribute('title');
-                    this.setTitle(title);
+                    this.setAttribute("title", title);
                 }
                 else {
-                    this.setTitle(this.title);
+                    this.setAttribute("title", this.title);
                 }
             }
     
             attributeChangedCallback(attr, oldVal, newVal) {
                 if (attr === 'title') {
-                    this.setTitle(newVal);
+                    this.setAttribute("title", newVal);
                 }
             }
     
-            // Set the "open" property
+            // Set the "title" property
             set title(option) {
                 this.setAttribute("title", option);
     
@@ -64,9 +61,9 @@
                 this.strong.textContent = this.title;
             }
     
-            // Get the "open" property
+            // Get the "title" property
             get title() {
-                return this.hasAttribute("title");
+                return this.getAttribute("title");
             }
         }
     

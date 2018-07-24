@@ -21,11 +21,11 @@
             }
     
             .toggleStyle{
-                display: inline-block;
+                display: block;
             }
         </style>
         <div class="wrapper">
-            <p class="title" onclick="toggleStyle()"><strong></strong></p>
+            <p class="title"><strong></strong></p>
             <p class="description" id="cardDescription"><small></small></p>
         </div>
     </template>
@@ -45,6 +45,9 @@
     
             constructor() {
                 super();
+
+                this.toggleStyle = this.toggleStyle.bind(this);
+
                 this.setAttribute("title", "Default Title");
                 this.setAttribute("description", "Default Description");
             }
@@ -59,36 +62,67 @@
     
                 // Caches <strong> DOM query
                 this.strong = shadowRoot.querySelector('strong');
-                // Caches <span> DOM query
-                this.span = shadowRoot.querySelector('span');
+                // Caches <small> DOM query
+                this.small = shadowRoot.querySelector('small');
     
                 // Checks if the "title" attribute has been overwritten
                 if (this.hasAttribute('title')) {
                     var title = this.getAttribute('title');
-                    this.setTitle(title);
+                    this.setAttribute("title", title);
+                    
+                    // Sets "title" value into <strong>
+                    this.strong.textContent = this.title;
                 }
                 else {
-                    this.setTitle(this.title);
+                    this.setAttribute("title", this.title);
+    
+                    // Sets "title" value into <strong>
+                    this.strong.textContent = this.title;
                 }
     
                 // Checks if the "description" attribute has been overwritten
                 if (this.hasAttribute('description')) {
                     var description = this.getAttribute('description');
-                    this.setDescription(description);
+                    this.setAttribute("description", description);
+                    
+                    // Sets "description" value into <small>
+                    this.small.textContent = this.description;
                 }
                 else {
-                    this.setDescription(this.description);
+                    this.setAttribute("description", this.description);
+    
+                    // Sets "description" value into <small>
+                    this.small.textContent = this.description;
                 }
+
+                this.titleP = this.shadowRoot.querySelector("p");
+
             }
     
+            attachedCallback() {
+                this.titleP.addEventListener('click', this.toggleStyle);
+            }
+
             attributeChangedCallback(attr, oldVal, newVal) {
                 if (attr === 'title') {
-                    this.setTitle(newVal);
-                }
+                    this.setAttribute("title", newVal);
     
-                if (attr === 'description') {
-                    this.setDescription(newVal);
+                    // Sets "title" value into <strong>
+                    this.strong.textContent = newVal;
                 }
+
+                if (attr === 'description') {
+                    this.setAttribute("description", newVal);
+    
+                    // Sets "description" value into <small>
+                    this.small.textContent = newVal;
+                }
+            }
+            
+            toggleStyle(event){
+                var titleElement = event.target; // strong
+                var descriptionElement = titleElement.parentNode.parentNode.querySelector(".description");
+                descriptionElement.classList.toggle("toggleStyle");            
             }
     
             // Set the "title" property
@@ -116,10 +150,10 @@
             get description() {
                 return this.hasAttribute("description");
             }
-    
-            toggleStyle(){
-                var element = document.getElementById("cardDescription");
-                element.classList.toggle("toggleStyle");            
+
+            
+            disconnectedCallback() {
+                this.titleP.removeEventListener('click', this.toggleStyle);
             }
         }
     

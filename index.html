@@ -1,5 +1,5 @@
 <body>
-    <!-- Add icon library -->
+    <!-- Imports -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
     <link rel="stylesheet" type="text/css" href="styles.css">
@@ -7,12 +7,16 @@
     <script src="bower_components/webcomponentsjs/webcomponents.min.js"></script>
     <script src="https://component.kitchen/polyfills/webcomponents-lite.js"></script>
 
+    <link rel="import" href="trello-column.html">
+    <link rel="import" href="trello-card.html">
+
+
     <!--    Modal    -->
     <div id="newItemModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
                 <span class="close">&times;</span>
-                <h2>Add Item</h2>
+                <h2>Add/Edit Item</h2>
             </div>
             <div class="modal-body">
                 <input class="modalTitle" type="text" placeholder="Title..." id="titleModalInput">
@@ -23,7 +27,7 @@
             </div>
             <div class="modal-footer">
                 <button class="btn danger" onclick="modal.closeModal()">Cancel</button>
-                <button class="btn success" onclick="modal.addItem()">Confirm</button>
+                <button class="btn success" onclick="modal.confirm()">Confirm</button>
             </div>
         </div>    
     </div>
@@ -34,6 +38,26 @@
         <b class="btn-group">            
             <button onclick="topnav.addColumn()" class="btn success"><span class="fa fa-plus"></span> Add Column</button>
             <button onclick="topnav.addCard()" class="btn success"><span class="fa fa-plus"></span> Add Card</button>
+        </b>
+        <b>
+            <div class="dropdown">
+                <select id="editColumnSelect"></select>
+            </div>
+            <button onclick="topnav.editColumn()" class="btn warning"><span class="fa fa-edit"></span> Edit Column</button>
+            <div class="dropdown">
+                <select id="editCardSelect"></select>
+            </div>
+            <button onclick="topnav.editCard()" class="btn warning"><span class="fa fa-edit"></span> Edit Card</button>
+        </b>
+        <b>
+            <div class="dropdown">
+                <select id="deleteColumnSelect"></select>
+            </div>
+            <button onclick="columnElement.deleteColumn()" class="btn danger"><span class="fa fa-trash"></span> Delete Column</button>
+            <div class="dropdown">
+                <select id="deleteCardSelect"></select>
+            </div>
+            <button onclick="cardElement.deleteCard()" class="btn danger"><span class="fa fa-trash"></span> Delete Card</button>
         </b>
         <c>
             <button onclick="topnav.filterCards()" class="btn success"><span class="fa fa-search"></span></button>
@@ -51,6 +75,10 @@
 
 <script>
     //TopNav Elements    
+    var editColumnSelect = document.getElementById('editColumnSelect');
+    var editCardSelect = document.getElementById('editCardSelect');
+    var deleteColumnSelect = document.getElementById('deleteColumnSelect');
+    var deleteCardSelect = document.getElementById('deleteCardSelect');
     var searchInput = document.getElementById("searchInput");
 
     // Modal Elements
@@ -70,8 +98,12 @@
     $.getJSON("db.json", function(json) {
         maltem.columns = json.columns;
         maltem.cards = json.cards;
+
         maltem.updateRawColumns();
         maltem.updateRawCards();
+
+        maltem.refreshColumnSelects();
+        maltem.refreshCardSelects();
     });
 
     // Common Functions
@@ -81,8 +113,8 @@
         }
         $.each(maltem.columns, function(){
             $("<a></a>")
-            .attr("value", this.id)
-            .html(this.title)
+            .attr("id", this.id)
+            .attr("title", this.title)
             .appendTo("#rawColumns");
         });
     }
@@ -91,36 +123,80 @@
             rawCards.removeChild(rawCards.firstChild);
         }
         $.each(maltem.cards, function(){
-            $("<a></a>")
-            .attr("value", this.id)
-            .html(this.title)
+            $("<trello-card></trello-card>")
+            .attr("id", this.id)
+            .attr("title", this.title)
+            .attr("description", this.description || "")
+            .attr("columnId", this.columnId)
             .appendTo("#rawCards");
         });
     }
-    maltem.refreshColumnSelect = function(){
+    maltem.refreshColumnSelects = function(){
         while (columnSelect.firstChild) {
             columnSelect.removeChild(columnSelect.firstChild);
+        }
+        while (editColumnSelect.firstChild) {
+            editColumnSelect.removeChild(editColumnSelect.firstChild);
+        }        
+        while (deleteColumnSelect.firstChild) {
+            deleteColumnSelect.removeChild(deleteColumnSelect.firstChild);
         }
         $.each(maltem.columns, function(){
             $("<option></option>")
             .attr("value", this.id)
             .html(this.title)
             .appendTo("#columnSelect");
+
+            $("<option></option>")
+            .attr("value", this.id)
+            .html(this.title)
+            .appendTo("#editColumnSelect");
+
+            $("<option></option>")
+            .attr("value", this.id)
+            .html(this.title)
+            .appendTo("#deleteColumnSelect");
+        });
+    }
+    maltem.refreshCardSelects = function(){
+        while (editCardSelect.firstChild) {
+            editCardSelect.removeChild(editCardSelect.firstChild);
+        }
+        while (deleteCardSelect.firstChild) {
+            deleteCardSelect.removeChild(deleteCardSelect.firstChild);
+        }
+        $.each(maltem.cards, function(){
+            $("<option></option>")
+            .attr("value", this.id)
+            .html(this.title)
+            .appendTo("#editCardSelect");
+
+            $("<option></option>")
+            .attr("value", this.id)
+            .html(this.title)
+            .appendTo("#deleteCardSelect");
         });
     }
 
     // Common Modal Functions
+    modal.confirm = function(){
+        if(modal.mode === "ADD") {
+            modal.addItem();
+        } else if (modal.mode === "EDIT"){
+            modal.editItem();
+        }
+    }
     modal.addItem = function() {
         var newItem = {
             id: new Date().getUTCMilliseconds(), //timestamp Id
             title: titleModalInput.value
         }
 
-        if(modal.mode === "COLUMN" && modal.checkIfUnique(newItem,"COLUMN") == true){
+        if(modal.type === "COLUMN" && modal.checkIfUnique(newItem, modal.type) == true){
             maltem.columns.push(newItem);
             console.log(maltem.columns);
 
-        } else if(modal.mode === "CARD" && modal.checkIfUnique(newItem,"CARD") == true) {
+        } else if(modal.type === "CARD" && modal.checkIfUnique(newItem, modal.type) == true) {
             newItem.description = descriptionModalInput.value;
             newItem.columnId = columnSelect.value;
 
@@ -137,6 +213,21 @@
         descriptionModalInput.value = null;
         columnSelect.value = null;
 
+        modal.closeModal();
+    }
+    modal.editItem = function(){
+        var editItem = {
+            id: modal.oldItem.id,
+            title: titleModalInput.value,
+            description: descriptionModalInput.value || null,
+            columnId: columnSelect.value || null,
+        }
+        
+        if(modal.type === "COLUMN" && modal.checkIfUnique(editItem, modal.type)) {
+            maltem.columns = maltem.columns.map(obj => editItem.id == obj.id ? editItem : obj);
+        } else if(modal.type === "CARD" && modal.checkIfUnique(editItem, modal.type)){
+            maltem.cards = maltem.cards.map(obj => editItem.id == obj.id ? editItem : obj);
+        }
 
         modal.closeModal();
     }
@@ -158,10 +249,13 @@
 
         return unique;
     }
-
     modal.closeModal = function(){
         maltem.updateRawColumns();
         maltem.updateRawCards();
+
+        maltem.refreshColumnSelects();
+        maltem.refreshCardSelects();
+
         modal.style.display = "none";
     }
     closeButton.onclick = function(event){
@@ -171,42 +265,78 @@
     // TopNav Functions
     var topnav = {};
     topnav.addColumn = function() {
-        modal.mode = "COLUMN";
+        modal.mode = "ADD";
+        modal.type = "COLUMN";
         descriptionModalInput.style.display = "none";
         columnSelect.style.display = "none";
         modal.style.display = "block";
     };
     topnav.addCard = function() {
-        maltem.refreshColumnSelect();
-        modal.mode = "CARD";
+        maltem.refreshColumnSelects();
+        modal.mode = "ADD";
+        modal.type = "CARD";
         descriptionModalInput.style.display = "inline-block";
         columnSelect.style.display = "inline-block";
         modal.style.display = "block";
     };
     topnav.filterCards = function() {
+        var filterValue = searchInput.value;
     }
+    topnav.editColumn = function() {
+        modal.mode = "EDIT";
+        modal.type = "COLUMN";
+        modal.oldItem = maltem.columns.find(function(element){
+            return element.id == editColumnSelect.value;
+        });
+
+        titleModalInput.value = modal.oldItem.title;
+
+        descriptionModalInput.style.display = "none";
+        columnSelect.style.display = "none";
+        modal.style.display = "block";
+    };
+    topnav.editCard = function() {
+        maltem.refreshColumnSelects();
+        modal.mode = "EDIT";
+        modal.type = "CARD";
+        modal.oldItem = maltem.cards.find(function(element){
+            return element.id == editCardSelect.value;
+        });
+
+        titleModalInput.value = modal.oldItem.title;
+        descriptionModalInput.value = modal.oldItem.description;
+        columnSelect.value = modal.oldItem.columnId;
+
+        descriptionModalInput.style.display = "inline-block";
+        columnSelect.style.display = "inline-block";
+        modal.style.display = "block";
+    };
 
     // Column Functions
     var columnElement = {};
-    columnElement.editColumn = function(columnId, editedColumn){
-        var replacements = [editedColumn];
-        maltem.columns.map(obj => replacements.find(o => o.id === obj.id) || obj);
-    }
-    columnElement.deleteColumn = function(columnId) {
-        if (maltem.columns.length > 1) {
-            var removed = maltem.pop('columns');
+    columnElement.deleteColumn = function() {
+        var columnId = deleteColumnSelect.value;
+        var index = maltem.columns.findIndex(function(element){
+            return element.id == columnId;
+        });
+        if(index){
+            maltem.columns.splice(index, 1);
+            maltem.updateRawColumns();
+            maltem.refreshColumnSelects();
         }
     };
     
     // Card Functions
     var cardElement = {};
-    cardElement.editCard = function(cardId, editedCard){
-        var replacements = [editedCard];
-        maltem.cards.map(obj => replacements.find(o => o.id === obj.id) || obj);
-    }
-    cardElement.deleteCard = function(cardId) {
-        if (maltem.cards.length > 1) {
-            var removed = maltem.pop('cards');
+    cardElement.deleteCard = function() {
+        var cardId = deleteCardSelect.value;
+        var index = maltem.cards.findIndex(function(element){
+            return element.id == cardId;
+        });
+        if(index){
+            maltem.cards.splice(index, 1);
+            maltem.updateRawCards();
+            maltem.refreshCardSelects();
         }
     };
 
