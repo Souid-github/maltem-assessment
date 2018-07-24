@@ -1,0 +1,131 @@
+<template>
+        <style>
+            strong {
+                color:blue
+            }    
+            .wrapper{
+                border-style: solid;
+                border-width: 2px;
+                max-width: 150px;
+            }
+            .title{
+                border-bottom-style: solid;
+                border-width: 2px;
+                /* float: left; */
+                text-align: center;
+                text-decoration: none;
+                font-size: 17px;
+            }
+            .description{
+                display: none;
+            }
+    
+            .toggleStyle{
+                display: inline-block;
+            }
+        </style>
+        <div class="wrapper">
+            <p class="title" onclick="toggleStyle()"><strong></strong></p>
+            <p class="description" id="cardDescription"><small></small></p>
+        </div>
+    </template>
+    
+    <script>
+    (function(window, document, undefined) {
+        // Refers to the "importer", which is index.html
+        var thatDoc = document;
+    
+        // Refers to the "importee", which is src/trello-card.html
+        var thisDoc =  (thatDoc._currentScript || thatDoc.currentScript).ownerDocument;
+    
+        // Gets content from <template>
+        var template = thisDoc.querySelector('template').content;
+    
+        class TrelloCard extends HTMLElement{
+    
+            constructor() {
+                super();
+                this.setAttribute("title", "Default Title");
+                this.setAttribute("description", "Default Description");
+            }
+    
+            createdCallback() {
+                // Creates the shadow root
+                var shadowRoot = this.createShadowRoot();
+    
+                // Adds a template clone into shadow root
+                var clone = thatDoc.importNode(template, true);
+                shadowRoot.appendChild(clone);
+    
+                // Caches <strong> DOM query
+                this.strong = shadowRoot.querySelector('strong');
+                // Caches <span> DOM query
+                this.span = shadowRoot.querySelector('span');
+    
+                // Checks if the "title" attribute has been overwritten
+                if (this.hasAttribute('title')) {
+                    var title = this.getAttribute('title');
+                    this.setTitle(title);
+                }
+                else {
+                    this.setTitle(this.title);
+                }
+    
+                // Checks if the "description" attribute has been overwritten
+                if (this.hasAttribute('description')) {
+                    var description = this.getAttribute('description');
+                    this.setDescription(description);
+                }
+                else {
+                    this.setDescription(this.description);
+                }
+            }
+    
+            attributeChangedCallback(attr, oldVal, newVal) {
+                if (attr === 'title') {
+                    this.setTitle(newVal);
+                }
+    
+                if (attr === 'description') {
+                    this.setDescription(newVal);
+                }
+            }
+    
+            // Set the "title" property
+            set title(option) {
+                this.setAttribute("title", option);
+    
+                // Sets "title" value into <strong>
+                this.strong.textContent = this.title;
+            }
+    
+            // Get the "title" property
+            get title() {
+                return this.hasAttribute("title");
+            }
+    
+            // Set the "description" property
+            set description(option) {
+                this.setAttribute("description", option);
+    
+                // Sets "description" value into <span>
+                this.small.textContent = this.description;
+            }
+    
+            // Get the "description" property
+            get description() {
+                return this.hasAttribute("description");
+            }
+    
+            toggleStyle(){
+                var element = document.getElementById("cardDescription");
+                element.classList.toggle("toggleStyle");            
+            }
+        }
+    
+    
+        // Registers <trello-card> in the main document
+        window.MyElement = thatDoc.registerElement('trello-card', TrelloCard);
+    })(window, document);
+    </script>
+    

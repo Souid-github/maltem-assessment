@@ -1,0 +1,77 @@
+<template>
+        <!-- Defines element markup -->
+        <style>
+            strong {
+                color:green
+            }    
+        </style>
+        <strong></strong>
+    </template>
+    
+    <script>
+    (function(window, document, undefined) {
+        // Refers to the "importer", which is index.html
+        var thatDoc = document;
+    
+        // Refers to the "importee", which is src/trello-column.html
+        var thisDoc =  (thatDoc._currentScript || thatDoc.currentScript).ownerDocument;
+    
+        // Gets content from <template>
+        var template = thisDoc.querySelector('template').content;
+    
+        // Creates the "title" attribute and sets a default value
+        // MyElementProto.title = 'ColumnTitle';
+    
+        class TrelloColumn extends HTMLElement{
+    
+            constructor() {
+                super();
+                this.setAttribute("title", "Default Title");
+            }
+    
+            createdCallback() {
+                // Creates the shadow root
+                var shadowRoot = this.createShadowRoot();
+    
+                // Adds a template clone into shadow root
+                var clone = thatDoc.importNode(template, true);
+                shadowRoot.appendChild(clone);
+    
+                // Caches <strong> DOM query
+                this.strong = shadowRoot.querySelector('strong');
+    
+                // Checks if the "title" attribute has been overwritten
+                if (this.hasAttribute('title')) {
+                    var title = this.getAttribute('title');
+                    this.setTitle(title);
+                }
+                else {
+                    this.setTitle(this.title);
+                }
+            }
+    
+            attributeChangedCallback(attr, oldVal, newVal) {
+                if (attr === 'title') {
+                    this.setTitle(newVal);
+                }
+            }
+    
+            // Set the "open" property
+            set title(option) {
+                this.setAttribute("title", option);
+    
+                // Sets "title" value into <strong>
+                this.strong.textContent = this.title;
+            }
+    
+            // Get the "open" property
+            get title() {
+                return this.hasAttribute("title");
+            }
+        }
+    
+        // Registers <trello-column> in the main document
+        window.MyElement = thatDoc.registerElement('trello-column', TrelloColumn);
+    })(window, document);
+    </script>
+    
