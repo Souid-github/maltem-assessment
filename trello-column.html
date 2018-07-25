@@ -1,74 +1,73 @@
 <template>
-        <!-- Defines element markup -->
-        <style>
-            strong {
-                color:green
-            }    
-        </style>
-        <strong></strong>
-    </template>
-    
-    <script>
-    (function(window, document, undefined) {
-        // Refers to the "importer", which is index.html
-        var thatDoc = document;
-    
-        // Refers to the "importee", which is src/trello-column.html
-        var thisDoc =  (thatDoc._currentScript || thatDoc.currentScript).ownerDocument;
-    
-        // Gets content from <template>
-        var template = thisDoc.querySelector('template').content;
-    
-        class TrelloColumn extends HTMLElement{
-    
-            constructor() {
-                super();
-                this.setAttribute("title", "Default Title");
+    <style>
+        strong {
+            color:green
+        }    
+    </style>
+    <strong></strong>
+    <div class="cards"></div>
+</template>
+<script>
+(function(window, document, undefined) {
+    // Refers to the "importer", which is index.html
+    var thatDoc = document;
+
+    // Refers to the "importee", which is src/trello-column.html
+    var thisDoc =  (thatDoc._currentScript || thatDoc.currentScript).ownerDocument;
+
+    // Gets content from <template>
+    var template = thisDoc.querySelector('template').content;
+
+    class TrelloColumn extends HTMLElement{
+
+        constructor() {
+            super();
+            this.setAttribute("title", "Default Title");
+        }
+
+        createdCallback() {
+            // Creates the shadow root
+            var shadowRoot = this.createShadowRoot();
+
+            // Adds a template clone into shadow root
+            var clone = thatDoc.importNode(template, true);
+            shadowRoot.appendChild(clone);
+
+            // Caches <strong> DOM query
+            this.strong = shadowRoot.querySelector('strong');
+
+            // Checks if the "title" attribute has been overwritten
+            if (this.hasAttribute('title')) {
+                var title = this.getAttribute('title');
+                this.setAttribute("title", title);
             }
-    
-            createdCallback() {
-                // Creates the shadow root
-                var shadowRoot = this.createShadowRoot();
-    
-                // Adds a template clone into shadow root
-                var clone = thatDoc.importNode(template, true);
-                shadowRoot.appendChild(clone);
-    
-                // Caches <strong> DOM query
-                this.strong = shadowRoot.querySelector('strong');
-    
-                // Checks if the "title" attribute has been overwritten
-                if (this.hasAttribute('title')) {
-                    var title = this.getAttribute('title');
-                    this.setAttribute("title", title);
-                }
-                else {
-                    this.setAttribute("title", this.title);
-                }
-            }
-    
-            attributeChangedCallback(attr, oldVal, newVal) {
-                if (attr === 'title') {
-                    this.setAttribute("title", newVal);
-                }
-            }
-    
-            // Set the "title" property
-            set title(option) {
-                this.setAttribute("title", option);
-    
-                // Sets "title" value into <strong>
-                this.strong.textContent = this.title;
-            }
-    
-            // Get the "title" property
-            get title() {
-                return this.getAttribute("title");
+            else {
+                this.setAttribute("title", this.title);
             }
         }
-    
-        // Registers <trello-column> in the main document
-        window.MyElement = thatDoc.registerElement('trello-column', TrelloColumn);
-    })(window, document);
-    </script>
+
+        attributeChangedCallback(attr, oldVal, newVal) {
+            if (attr === 'title') {
+                this.setAttribute("title", newVal);
+            }
+        }
+        /* Getters/Setters  */
+        set id(option) {
+            this.setAttribute("id", option);
+        }
+        get id() {
+            return this.getAttribute("id");
+        }
+        set title(option) {
+            this.setAttribute("title", option);
+            this.strong.textContent = this.title;
+        }
+        get title() {
+            return this.getAttribute("title");
+        }
+    }
+
+    window.MyElement = thatDoc.registerElement('trello-column', TrelloColumn);
+})(window, document);
+</script>
     

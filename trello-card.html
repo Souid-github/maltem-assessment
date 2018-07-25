@@ -1,165 +1,250 @@
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
 <template>
-        <style>
-            strong {
-                color:blue
-            }    
-            .wrapper{
-                border-style: solid;
-                border-width: 2px;
-                max-width: 150px;
-            }
-            .title{
-                border-bottom-style: solid;
-                border-width: 2px;
-                /* float: left; */
-                text-align: center;
-                text-decoration: none;
-                font-size: 17px;
-            }
-            .description{
-                display: none;
-            }
-    
-            .toggleStyle{
-                display: block;
-            }
-        </style>
-        <div class="wrapper">
-            <p class="title"><strong></strong></p>
-            <p class="description" id="cardDescription"><small></small></p>
-        </div>
-    </template>
-    
-    <script>
-    (function(window, document, undefined) {
-        // Refers to the "importer", which is index.html
-        var thatDoc = document;
-    
-        // Refers to the "importee", which is src/trello-card.html
-        var thisDoc =  (thatDoc._currentScript || thatDoc.currentScript).ownerDocument;
-    
-        // Gets content from <template>
-        var template = thisDoc.querySelector('template').content;
-    
-        class TrelloCard extends HTMLElement{
-    
-            constructor() {
-                super();
+    <style>
+        strong {
+            color:black
+        }    
+        .wrapper{
+            border-color: green;
+            border-style: solid;
+            border-width: 2px;
+            max-width: 150px;
+            margin: 10px;
+            position: relative;
+        }
+        .title{
+            text-align: center;
+            text-decoration: none;
+            font-size: 17px;
+        }
+        .description{
+            display: none;
+        }
 
-                this.toggleStyle = this.toggleStyle.bind(this);
+        .showDescription{
+            text-align: center;
+            display: block;
+        }
 
-                this.setAttribute("title", "Default Title");
-                this.setAttribute("description", "Default Description");
-            }
-    
-            createdCallback() {
-                // Creates the shadow root
-                var shadowRoot = this.createShadowRoot();
-    
-                // Adds a template clone into shadow root
-                var clone = thatDoc.importNode(template, true);
-                shadowRoot.appendChild(clone);
-    
-                // Caches <strong> DOM query
-                this.strong = shadowRoot.querySelector('strong');
-                // Caches <small> DOM query
-                this.small = shadowRoot.querySelector('small');
-    
-                // Checks if the "title" attribute has been overwritten
-                if (this.hasAttribute('title')) {
-                    var title = this.getAttribute('title');
-                    this.setAttribute("title", title);
-                    
-                    // Sets "title" value into <strong>
-                    this.strong.textContent = this.title;
-                }
-                else {
-                    this.setAttribute("title", this.title);
-    
-                    // Sets "title" value into <strong>
-                    this.strong.textContent = this.title;
-                }
-    
-                // Checks if the "description" attribute has been overwritten
-                if (this.hasAttribute('description')) {
-                    var description = this.getAttribute('description');
-                    this.setAttribute("description", description);
-                    
-                    // Sets "description" value into <small>
-                    this.small.textContent = this.description;
-                }
-                else {
-                    this.setAttribute("description", this.description);
-    
-                    // Sets "description" value into <small>
-                    this.small.textContent = this.description;
-                }
+        .wrapper:hover .edit {
+            display: block;
+        }
 
-                this.titleP = this.shadowRoot.querySelector("p");
+        .wrapper:hover .delete {
+            display: block;
+        }
+        
+        /* Edit button */
+        .edit {
+            padding-top: 20px;	
+            padding-right: 20px;
+            position: absolute;
+            right: 0;
+            top: 0;
+            display: none;
+            color: #000;
+            background-color: blue;
+        }
 
+        /* Delete button */
+        .delete {
+            padding-top: 20px;	
+            padding-right: 20px;
+            position: absolute;
+            right: 0;
+            bottom: 0;
+            display: none;
+            color: #000;
+            background-color: red;
+        }
+
+    </style>
+    <div class="wrapper">
+        <p class="title"><strong></strong></p>
+        <p class="description" id="cardDescription"><small></small></p>
+        <div class="edit"><a><i class="fa fa-pencil fa-lg"></i></a></div>
+        <div class="delete"><a><i class="fa fa-trash"></i></a></div>
+    </div>
+</template>
+
+<script>
+(function(window, document, undefined) {
+    // Refers to the "importer", which is index.html
+    var thatDoc = document;
+
+    // Refers to the "importee", which is src/trello-card.html
+    var thisDoc =  (thatDoc._currentScript || thatDoc.currentScript).ownerDocument;
+
+    // Gets content from <template>
+    var template = thisDoc.querySelector('template').content;
+
+    class TrelloCard extends HTMLElement{
+
+        constructor() {
+            super();
+
+            this.showDescription = this.showDescription.bind(this);
+            this.edit = this.edit.bind(this);
+            this.delete = this.delete.bind(this);
+
+            this.setAttribute("title", "Default Title");
+            this.setAttribute("description", "Default Description");
+        }
+
+        createdCallback() {
+            // Creates the shadow root
+            var shadowRoot = this.createShadowRoot();
+
+            // Adds a template clone into shadow root
+            var clone = thatDoc.importNode(template, true);
+            shadowRoot.appendChild(clone);
+
+            // Caches <strong> DOM query
+            this.strong = shadowRoot.querySelector('strong');
+            // Caches <small> DOM query
+            this.small = shadowRoot.querySelector('small');
+
+            // Checks if the "id" attribute has been overwritten
+            if (this.hasAttribute('id')) {
+                var id = this.getAttribute('id');
+                this.setAttribute("id", id);
             }
-    
-            attachedCallback() {
-                this.titleP.addEventListener('click', this.toggleStyle);
+            else {
+                this.setAttribute("id", this.id);
             }
 
-            attributeChangedCallback(attr, oldVal, newVal) {
-                if (attr === 'title') {
-                    this.setAttribute("title", newVal);
-    
-                    // Sets "title" value into <strong>
-                    this.strong.textContent = newVal;
-                }
-
-                if (attr === 'description') {
-                    this.setAttribute("description", newVal);
-    
-                    // Sets "description" value into <small>
-                    this.small.textContent = newVal;
-                }
-            }
-            
-            toggleStyle(event){
-                var titleElement = event.target; // strong
-                var descriptionElement = titleElement.parentNode.parentNode.querySelector(".description");
-                descriptionElement.classList.toggle("toggleStyle");            
-            }
-    
-            // Set the "title" property
-            set title(option) {
-                this.setAttribute("title", option);
-    
+            // Checks if the "title" attribute has been overwritten
+            if (this.hasAttribute('title')) {
+                var title = this.getAttribute('title');
+                this.setAttribute("title", title);
+                
                 // Sets "title" value into <strong>
                 this.strong.textContent = this.title;
             }
-    
-            // Get the "title" property
-            get title() {
-                return this.hasAttribute("title");
-            }
-    
-            // Set the "description" property
-            set description(option) {
-                this.setAttribute("description", option);
-    
-                // Sets "description" value into <span>
-                this.small.textContent = this.description;
-            }
-    
-            // Get the "description" property
-            get description() {
-                return this.hasAttribute("description");
+            else {
+                this.setAttribute("title", this.title);
+
+                // Sets "title" value into <strong>
+                this.strong.textContent = this.title;
             }
 
-            
-            disconnectedCallback() {
-                this.titleP.removeEventListener('click', this.toggleStyle);
+            // Checks if the "description" attribute has been overwritten
+            if (this.hasAttribute('description')) {
+                var description = this.getAttribute('description');
+                this.setAttribute("description", description);
+                
+                // Sets "description" value into <small>
+                this.small.textContent = this.description;
+            }
+            else {
+                this.setAttribute("description", this.description);
+
+                // Sets "description" value into <small>
+                this.small.textContent = this.description;
+            }
+
+            // Checks if the "columnId" attribute has been overwritten
+            if (this.hasAttribute('columnId')) {
+                var columnId = this.getAttribute('columnId');
+                this.setAttribute("columnId", columnId);
+            }
+            else {
+                this.setAttribute("columnId", this.columnId);
+            }
+
+            // Checks if the "deleteFunction" attribute has been overwritten
+            if (this.hasAttribute('deleteFunction')) {
+                var deleteFunction = this.getAttribute('deleteFunction');
+                this.setAttribute("deleteFunction", deleteFunction);
+            }
+            else {
+                this.setAttribute("deleteFunction", this.deleteFunction);
+            }
+
+            this.titleP = this.shadowRoot.querySelector("p");
+            this.editButton = this.shadowRoot.querySelector(".edit");
+            this.deleteButton = this.shadowRoot.querySelector(".delete");
+
+        }
+
+        attachedCallback() {
+            this.titleP.addEventListener('click', this.showDescription);
+            this.editButton.addEventListener('click', this.edit);
+            this.deleteButton.addEventListener('click', this.delete);
+        }
+
+        attributeChangedCallback(attr, oldVal, newVal) {
+            if (attr === 'title') {
+                this.setAttribute("title", newVal);
+                this.strong.textContent = newVal;
+            }
+
+            if (attr === 'description') {
+                this.setAttribute("description", newVal);
+                this.small.textContent = newVal;
             }
         }
-    
-    
-        // Registers <trello-card> in the main document
-        window.MyElement = thatDoc.registerElement('trello-card', TrelloCard);
-    })(window, document);
-    </script>
-    
+        
+        showDescription(event){
+            var titleElement = event.target; // strong
+            var descriptionElement = titleElement.parentNode.parentNode.querySelector(".description");
+            descriptionElement.classList.toggle("showDescription");            
+        }
+
+        edit(event){
+            console.log(event);
+            //this.editFunction();
+        }
+
+        delete(event){
+            console.log(event);        
+            //this.deleteFunction(3);        
+        }
+        
+        /* Getters/Setters  */
+        set id(option) {
+            this.setAttribute("id", option);
+        }
+        get id() {
+            return this.getAttribute("id");
+        }
+        set title(option) {
+            this.setAttribute("title", option);
+            this.strong.textContent = this.title;
+        }
+        get title() {
+            return this.getAttribute("title");
+        }
+        set description(option) {
+            this.setAttribute("description", option);
+            this.small.textContent = this.description;
+        }
+        get description() {
+            return this.getAttribute("description");
+        }
+        set columnId(option) {
+            this.setAttribute("columnId", option);
+        }
+        get columnId() {
+            return this.getAttribute("columnId");
+        }
+        set deleteFunction(option) {
+            console.log(option);
+            this.setAttribute("deleteFunction", option);
+        }
+        get deleteFunction() {
+            return this.getAttribute("deleteFunction");
+        }
+
+        
+        disconnectedCallback() {
+            this.titleP.removeEventListener('click', this.showDescription);
+            this.editButton.removeEventListener('click', this.edit);
+            this.deleteButton.removeEventListener('click', this.delete);
+        }
+    }
+
+    window.MyElement = thatDoc.registerElement('trello-card', TrelloCard);
+})(window, document);
+</script>

@@ -39,15 +39,16 @@
             <button onclick="topnav.addColumn()" class="btn success"><span class="fa fa-plus"></span> Add Column</button>
             <button onclick="topnav.addCard()" class="btn success"><span class="fa fa-plus"></span> Add Card</button>
         </b>
+        <!-- TODO : delete after functions linked to object -->
         <b>
             <div class="dropdown">
                 <select id="editColumnSelect"></select>
             </div>
-            <button onclick="topnav.editColumn()" class="btn warning"><span class="fa fa-edit"></span> Edit Column</button>
+            <button onclick="columnElement.editColumn()" class="btn warning"><span class="fa fa-edit"></span> Edit Column</button>
             <div class="dropdown">
                 <select id="editCardSelect"></select>
             </div>
-            <button onclick="topnav.editCard()" class="btn warning"><span class="fa fa-edit"></span> Edit Card</button>
+            <button onclick="cardElement.editCard()" class="btn warning"><span class="fa fa-edit"></span> Edit Card</button>
         </b>
         <b>
             <div class="dropdown">
@@ -64,7 +65,7 @@
             <input type="text" placeholder="Search..." id="searchInput">
         </c>
     </div>
-
+    <!-- TODO : delete later -->
     <div id="rawColumns"></div>
 
     <div id="rawCards"></div>
@@ -112,9 +113,11 @@
             rawColumns.removeChild(rawColumns.firstChild);
         }
         $.each(maltem.columns, function(){
-            $("<a></a>")
+            $("<trello-column></trello-column>")
             .attr("id", this.id)
             .attr("title", this.title)
+            // .attr("editFunction", columnElement.editColumn.bind(this))
+            // .attr("deleteFunction", columnElement.deleteColumn.bind(this))
             .appendTo("#rawColumns");
         });
     }
@@ -128,10 +131,13 @@
             .attr("title", this.title)
             .attr("description", this.description || "")
             .attr("columnId", this.columnId)
+            // .attr("editFunction", cardElement.editCard.bind(this))
+            // .attr("deleteFunction", cardElement.deleteCard.bind(this))
             .appendTo("#rawCards");
         });
     }
     maltem.refreshColumnSelects = function(){
+        // CLean Selects
         while (columnSelect.firstChild) {
             columnSelect.removeChild(columnSelect.firstChild);
         }
@@ -141,6 +147,8 @@
         while (deleteColumnSelect.firstChild) {
             deleteColumnSelect.removeChild(deleteColumnSelect.firstChild);
         }
+        
+        // Add options to Selects
         $.each(maltem.columns, function(){
             $("<option></option>")
             .attr("value", this.id)
@@ -159,12 +167,15 @@
         });
     }
     maltem.refreshCardSelects = function(){
+        // Clean Selects
         while (editCardSelect.firstChild) {
             editCardSelect.removeChild(editCardSelect.firstChild);
         }
         while (deleteCardSelect.firstChild) {
             deleteCardSelect.removeChild(deleteCardSelect.firstChild);
         }
+
+        // Add options to Selects
         $.each(maltem.cards, function(){
             $("<option></option>")
             .attr("value", this.id)
@@ -282,11 +293,14 @@
     topnav.filterCards = function() {
         var filterValue = searchInput.value;
     }
-    topnav.editColumn = function() {
+
+    // Column Functions
+    var columnElement = {};
+    columnElement.editColumn = function(columnId) {
         modal.mode = "EDIT";
         modal.type = "COLUMN";
         modal.oldItem = maltem.columns.find(function(element){
-            return element.id == editColumnSelect.value;
+            return element.id == columnId || editColumnSelect.value;
         });
 
         titleModalInput.value = modal.oldItem.title;
@@ -295,29 +309,10 @@
         columnSelect.style.display = "none";
         modal.style.display = "block";
     };
-    topnav.editCard = function() {
-        maltem.refreshColumnSelects();
-        modal.mode = "EDIT";
-        modal.type = "CARD";
-        modal.oldItem = maltem.cards.find(function(element){
-            return element.id == editCardSelect.value;
-        });
-
-        titleModalInput.value = modal.oldItem.title;
-        descriptionModalInput.value = modal.oldItem.description;
-        columnSelect.value = modal.oldItem.columnId;
-
-        descriptionModalInput.style.display = "inline-block";
-        columnSelect.style.display = "inline-block";
-        modal.style.display = "block";
-    };
-
-    // Column Functions
-    var columnElement = {};
-    columnElement.deleteColumn = function() {
-        var columnId = deleteColumnSelect.value;
+    columnElement.deleteColumn = function(columnId) {
+        var id = columnId || deleteColumnSelect.value;
         var index = maltem.columns.findIndex(function(element){
-            return element.id == columnId;
+            return element.id == id;
         });
         if(index){
             maltem.columns.splice(index, 1);
@@ -328,10 +323,26 @@
     
     // Card Functions
     var cardElement = {};
-    cardElement.deleteCard = function() {
-        var cardId = deleteCardSelect.value;
+    cardElement.editCard = function(cardId) {
+        maltem.refreshColumnSelects();
+        modal.mode = "EDIT";
+        modal.type = "CARD";
+        modal.oldItem = maltem.cards.find(function(element){
+            return element.id == cardId || editCardSelect.value;
+        });
+
+        titleModalInput.value = modal.oldItem.title;
+        descriptionModalInput.value = modal.oldItem.description;
+        columnSelect.value = modal.oldItem.columnId;
+
+        descriptionModalInput.style.display = "inline-block";
+        columnSelect.style.display = "inline-block";
+        modal.style.display = "block";
+    };
+    cardElement.deleteCard = function(cardId) {
+        var id = cardId || deleteCardSelect.value;
         var index = maltem.cards.findIndex(function(element){
-            return element.id == cardId;
+            return element.id == id;
         });
         if(index){
             maltem.cards.splice(index, 1);
